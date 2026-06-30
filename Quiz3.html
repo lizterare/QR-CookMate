@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>QR Cookmate - Vegetable Salad</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+       body { background-color: #f5f0e8; font-family: sans-serif; color: #3a2a10; }
+       .app-container { max-width: 400px; margin: 0 auto; background-color: #f5f0e8; min-height: 100vh; padding-bottom: 60px; }
+       .header { background-color: #5a4a2a; color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 10px; }
+       .header h1 { font-size: 22px; margin-bottom: 6px; }
+       .header p { font-size: 13px; opacity: 0.9; }
+       .ingredient-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 10px; }
+       .card { perspective: 800px; border-radius: 12px; cursor: pointer; height: 190px; }
+       .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s ease; transform-style: preserve-3d; border-radius: 12px; }
+       .card.correct .card-inner { transform: rotateY(180deg); }
+       .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; text-align: center; border: 2px solid #ddd; background: white; }
+       .card-back { transform: rotateY(180deg); background: #e8f5e9; border: 4px solid #2ecc71; font-size: 18px; font-weight: bold; color: #1a7a3a; }
+       .card-back .checkmark { font-size: 44px; margin-bottom: 8px; }
+       .card-front img { width: 100%; height: 95px; object-fit: cover; border-radius: 8px; }
+       .card-front h3 { margin: 7px 0 3px; font-size: 14px; }
+       .card-front p { font-size: 11px; color: #777; }
+       .card.wrong .card-front { border: 4px solid #e74c3c; animation: shake 0.5s ease; }
+       #procedure-screen { display: none; padding: 10px; }
+       .step-header { background-color: #5a4a2a; color: white; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 14px; }
+       .step-header h2 { font-size: 14px; margin-bottom: 6px; opacity: 0.85; }
+       .step-header p { font-size: 14px; font-weight: bold; line-height: 1.5; }
+       .progress-bar-wrap { background: rgba(255,255,255,0.3); border-radius: 99px; height: 6px; margin-top: 10px; overflow: hidden; }
+       .progress-bar-fill { height: 100%; background: #ffe066; border-radius: 99px; transition: width 0.4s ease; }
+       .choices-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+       .choice-btn { background: white; border: 2px solid #ddd; border-radius: 12px; padding: 13px 15px; font-size: 13px; color: #3a2a10; text-align: left; cursor: pointer; line-height: 1.5; transition: border 0.2s; }
+       .choice-btn:hover { border-color: #5a4a2a; }
+       .choice-btn.correct-choice { border: 3px solid #2ecc71; background: #e8f5e9; color: #1a7a3a; font-weight: bold; }
+       .choice-btn.wrong-choice { border: 3px solid #e74c3c; background: #fdecea; animation: shake 0.5s ease; }
+       #done-screen { display: none; text-align: center; padding: 60px 20px; }
+       #done-screen .trophy { font-size: 80px; margin-bottom: 16px; }
+       #done-screen h2 { font-size: 24px; color: #5a4a2a; margin-bottom: 10px; }
+       #done-screen p { font-size: 14px; color: #888; line-height: 1.6; }
+       .footer { text-align: center; padding: 10px 10px 0; }
+       .next-btn { display: block; width: 90%; margin: 12px auto 0; padding: 14px; background-color: #5a4a2a; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; }
+       .next-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+       .next-btn:not(:disabled):hover { background-color: #3d3018; }
+       @keyframes shake { 0% { transform: translateX(0); } 15% { transform: translateX(-8px); } 30% { transform: translateX(8px); } 45% { transform: translateX(-8px); } 60% { transform: translateX(8px); } 75% { transform: translateX(-4px); } 100% { transform: translateX(0); } }
+       .nav-options {
+   margin-top: 25px;
+   display: flex;
+   justify-content: center;
+   gap: 15px;
+}
+
+.action-btn {
+   background-color: #70442b; /* --accent-dark */
+   color: #f5f1ea;          /* --primary-color */
+   border: none;
+   padding: 12px 28px;
+   font-family: 'Quicksand', sans-serif;
+   font-weight: 700;
+   font-size: 1rem;
+   border-radius: 50px;     /* Rounded pill shape */
+   cursor: pointer;
+   box-shadow: 0 4px 10px rgba(112, 68, 43, 0.2);
+   transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.action-btn:hover {
+   background-color: #5a290f; /* Darker shade for hover */
+   transform: translateY(-3px);
+}
+   </style>
+</head>
+<body>
+    <audio id="fanfare-sound" src="u_ss015dykrt-brass-fanfare-with-timpani-and-winchimes-reverberated-146260.mp3"></audio>
+    <audio id="correct-sound" src="dragon-studio-correct-472358.mp3"></audio>
+<audio id="wrong-sound" src="freesound_community-wrong-47985.mp3"></audio>
+    <audio id="bg-music" loop>
+        <source src="bgm-cook-jazzy.mp3" type="audio/mpeg">
+    </audio>
+<div class="app-container">
+
+    <div id="ingredient-screen">
+        <header class="header">
+            <h1>Vegtable Salad</h1>
+            <p>Pick the ingredients</p>
+            <p>Tap all correct ingredients for Vegtable Salad</p>
+        </header>
+        <main class="ingredient-grid">
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/lettuce.jpg" alt="Lettuce"><h3>Lettuce</h3><p>1 Lettuce</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/cucumber.jpg" alt="Cucumber"><h3>Cucumber</h3><p>1 Cucumber</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/tomato.jpg" alt="Tomatoes"><h3>Tomatoes</h3><p>3 Tomatoes</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/ham.jpg" alt="Ham"><h3>Ham</h3><p>Ham</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/carrot.png" alt="Carrot"><h3>Carrot</h3><p>1 Carrot</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/mayo.jpg" alt="Mayonnaise"><h3>Mayonnaise</h3><p>1/4 cup Mayonnaise</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/calamansi.png" alt="Calamansi juic"><h3>Calamansi juice</h3><p>2 tablespoon. Calamansi juice or lemon juice</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/ketchup.jpg" alt="1 Ketchup"><h3>Ketchup</h3><p>1 Ketchup</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/sugar.webp" alt="Sugar"><h3>Sugar</h3><p>1 teaspoon Sugar</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/salt.jpg" alt="Salt"><h3>Salt</h3><p>Pinch of Salt</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/blackpepper.jpg" alt="Black pepper"><h3>Black pepper</h3><p>Pinch of Black pepper</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+    
+        </main>
+        <footer class="footer">
+            <p>Correct picks: <span id="score">0</span>/9</p>
+            <button class="next-btn" id="continue-btn" disabled onclick="goToProcedures()">Continue to Procedures</button>
+        </footer>
+    </div>
+
+    <div id="procedure-screen">
+        <header class="header">
+            <h1>Egg Drop Soup</h1>
+            <p>Follow the Procedures</p>
+        </header>
+        <div style="padding:10px;">
+            <div class="step-header">
+                <h2 id="step-label">Step 1 of 9</h2>
+                <p id="step-question"></p>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="choices-grid" id="choices-container"></div>
+        </div>
+    </div>
+
+    <div id="done-screen">
+        <div class="trophy">&#x1F3C6;</div>
+        <h2>Well Done!</h2>
+        <p>You completed all the procedures for<br><strong>Vegetable Salad!</strong></p>
+    
+        <div class="nav-options">
+            <button onclick="location.reload()" class="action-btn">Start Over</button>
+            <button onclick="window.location.href='cookmate.html'" class="action-btn">Back to Main Page</button>
+        </div>
+    </div>
+</div>
+<script>
+    const correctIngredients = ['Lettuce','Cucumber','Tomatoes','Carrot','Mayonnaise','Calamansi juice','Sugar','Salt','Black pepper'];
+    let correctCount = 0;
+
+    document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+        if (card.classList.contains('correct') || card.classList.contains('wrong')) return;
+        
+        const name = card.querySelector('h3').innerText.trim();
+        const isCorrect = correctIngredients.includes(name);
+        
+        // --- ADD THIS LINE HERE ---
+        checkAnswer(isCorrect);
+        // --------------------------
+
+        if (isCorrect) {
+            card.classList.add('correct');
+            correctCount++;
+            document.getElementById('score').textContent = correctCount;
+            if (correctCount === 9) document.getElementById('continue-btn').disabled = false;
+        } else {
+            card.classList.add('wrong');
+            setTimeout(() => card.classList.remove('wrong'), 1000);
+        }
+    });
+});
+
+    const steps = [
+        { question: "Step 1: Prepare the vegetables.", correct: "Wash the lettuce, cucumber, tomatoes, carrots, and onions thoroughly.", wrong: ["Wash all of the ingredients.", "Do not wash the vegetables.", "Wash the carrots, cucumber and onions thoroughly."] },
+        { question: "Step 2: Chop the lettuce into.", correct: "Bite Size.", wrong: ["Small pieces", "Large size.", "Garnish size"] },
+        { question: "Step 3: Slice, chop, and grate.", correct: "Slice the cucumber, chop the tomatoes, grate the carrot, and slice the onion.", wrong: ["Slice the onion, slice the tomatoes, grate the cucumber, and chop the carrot.", 
+        "Grate the cucumber, chop the tomatoes, grate the onion, and slice the tomatoes.", "Chop the cucumber, slice the tomatoes, chop the carrots, and slice the onion."] },
+        { question: "Step 4: In a small bowl, combine:", correct: "¼ cup mayonnaise, 2 tablespoons calamansi, 1 teaspoon sugar, and pinch of salt and black pepper.", wrong: ["2 tablespoons calamansi, 1 teaspoon sugar, and pinch of salt and black pepper",
+        "1 teaspoon sugar, and pinch of salt and black pepper", "¼ cup mayonnaise, 1 teaspoon sugar, and pinch of salt and black pepper"] },
+        { question: "Step 5:Mix all of it.", correct: "Mix the vegetables in a large bowl, pour the dressing over the vegetables and toss gently, and serve immediately.",
+        wrong: ["Mix the vegetables in a small bowl, pour the dressing over the vegetables and toss gently, and serve immediately", "Mix the vegetables in a large bowl, do not pour the dressing over the vegetables and toss gently, and serve immediately",
+        "Mix the vegetables in a large bowl, pour the dressing over the vegetables and toss roughly, and serve immediately"] },
+    ];
+
+    let currentStep = 0;
+    let stepLocked = false;
+
+    function goToProcedures() {
+        document.getElementById('ingredient-screen').style.display = 'none';
+        document.getElementById('procedure-screen').style.display = 'block';
+        renderStep();
+    }
+
+    function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+    function renderStep() {
+        stepLocked = false;
+        const total = steps.length;
+        const { question, correct, wrong } = steps[currentStep];
+        document.getElementById('step-label').textContent = 'Step ' + (currentStep + 1) + ' of ' + total;
+        document.getElementById('step-question').textContent = question;
+        document.getElementById('progress-fill').style.width = ((currentStep / total) * 100) + '%';
+        const options = shuffle([correct, ...wrong]);
+        const container = document.getElementById('choices-container');
+        container.innerHTML = '';
+        options.forEach(text => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.textContent = text;
+            btn.addEventListener('click', () => handleChoice(btn, text === correct));
+            container.appendChild(btn);
+        });
+    }
+
+    function handleChoice(btn, isCorrect) {
+        if (stepLocked) return;
+        if (isCorrect) {
+            stepLocked = true;
+            btn.classList.add('correct-choice');
+            setTimeout(() => {
+                currentStep++;
+                if (currentStep >= steps.length) showDone();
+                else renderStep();
+            }, 800);
+        } else {
+            btn.classList.add('wrong-choice');
+            setTimeout(() => btn.classList.remove('wrong-choice'), 1000);
+        }
+    }
+    function handleChoice(btn, isCorrect) {
+    if (stepLocked) return;
+
+    // Call the checkAnswer function to play the sound
+    checkAnswer(isCorrect);
+
+    if (isCorrect) {
+        stepLocked = true;
+        btn.classList.add('correct-choice');
+        setTimeout(() => {
+            currentStep++;
+            if (currentStep >= steps.length) showDone();
+            else renderStep();
+        }, 800);
+    } else {
+        btn.classList.add('wrong-choice');
+        setTimeout(() => btn.classList.remove('wrong-choice'), 1000);
+    }
+}
+
+function showDone() {
+    // 1. Hide the procedure screen
+    document.getElementById('procedure-screen').style.display = 'none';
+    
+    // 2. Show the done screen
+    document.getElementById('done-screen').style.display = 'block';
+
+    // 3. Stop the background music
+    const bgMusic = document.getElementById('bg-music');
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
+
+    // 4. Play the fanfare and stop it automatically when it ends
+    const fanfare = document.getElementById('fanfare-sound');
+    fanfare.play();
+
+    // This ensures it doesn't loop and stops exactly at its duration
+    fanfare.addEventListener('ended', () => {
+        console.log("Fanfare finished.");
+    });
+}
+window.addEventListener('DOMContentLoaded', () => {
+        const music = document.getElementById('bg-music');
+        
+        // Attempt to play the music
+        music.play().catch(error => {
+            console.log("Autoplay was prevented by the browser. Interaction required.");
+        });
+    });
+    function checkAnswer(isCorrect) {
+    if (isCorrect) {
+        // Play correct sound
+        document.getElementById('correct-sound').play();
+        // Your logic for marking it correct goes here
+    } else {
+        // Play wrong sound
+        document.getElementById('wrong-sound').play();
+        // Your logic for marking it wrong goes here
+    }
+}
+</script>
+</body>
+</html>

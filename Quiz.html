@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>QR Cookmate - Egg Drop Soup</title>
+    <style>
+         * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #f5f0e8; font-family: sans-serif; color: #3a2a10; }
+        .app-container { max-width: 400px; margin: 0 auto; background-color: #f5f0e8; min-height: 100vh; padding-bottom: 60px; }
+        .header { background-color: #5a4a2a; color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 10px; }
+        .header h1 { font-size: 22px; margin-bottom: 6px; }
+        .header p { font-size: 13px; opacity: 0.9; }
+        .ingredient-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 10px; }
+        .card { perspective: 800px; border-radius: 12px; cursor: pointer; height: 190px; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s ease; transform-style: preserve-3d; border-radius: 12px; }
+        .card.correct .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; text-align: center; border: 2px solid #ddd; background: white; }
+        .card-back { transform: rotateY(180deg); background: #e8f5e9; border: 4px solid #2ecc71; font-size: 18px; font-weight: bold; color: #1a7a3a; }
+        .card-back .checkmark { font-size: 44px; margin-bottom: 8px; }
+        .card-front img { width: 100%; height: 95px; object-fit: cover; border-radius: 8px; }
+        .card-front h3 { margin: 7px 0 3px; font-size: 14px; }
+        .card-front p { font-size: 11px; color: #777; }
+        .card.wrong .card-front { border: 4px solid #e74c3c; animation: shake 0.5s ease; }
+        #procedure-screen { display: none; padding: 10px; }
+        .step-header { background-color: #5a4a2a; color: white; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 14px; }
+        .step-header h2 { font-size: 14px; margin-bottom: 6px; opacity: 0.85; }
+        .step-header p { font-size: 14px; font-weight: bold; line-height: 1.5; }
+        .progress-bar-wrap { background: rgba(255,255,255,0.3); border-radius: 99px; height: 6px; margin-top: 10px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: #ffe066; border-radius: 99px; transition: width 0.4s ease; }
+        .choices-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .choice-btn { background: white; border: 2px solid #ddd; border-radius: 12px; padding: 13px 15px; font-size: 13px; color: #3a2a10; text-align: left; cursor: pointer; line-height: 1.5; transition: border 0.2s; }
+        .choice-btn:hover { border-color: #5a4a2a; }
+        .choice-btn.correct-choice { border: 3px solid #2ecc71; background: #e8f5e9; color: #1a7a3a; font-weight: bold; }
+        .choice-btn.wrong-choice { border: 3px solid #e74c3c; background: #fdecea; animation: shake 0.5s ease; }
+        #done-screen { display: none; text-align: center; padding: 60px 20px; }
+        #done-screen .trophy { font-size: 80px; margin-bottom: 16px; }
+        #done-screen h2 { font-size: 24px; color: #5a4a2a; margin-bottom: 10px; }
+        #done-screen p { font-size: 14px; color: #888; line-height: 1.6; }
+        .footer { text-align: center; padding: 10px 10px 0; }
+        .next-btn { display: block; width: 90%; margin: 12px auto 0; padding: 14px; background-color: #5a4a2a; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; }
+        .next-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .next-btn:not(:disabled):hover { background-color: #3d3018; }
+        @keyframes shake { 0% { transform: translateX(0); } 15% { transform: translateX(-8px); } 30% { transform: translateX(8px); } 45% { transform: translateX(-8px); } 60% { transform: translateX(8px); } 75% { transform: translateX(-4px); } 100% { transform: translateX(0); } }
+        .nav-options {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.action-btn {
+    background-color: #70442b; /* --accent-dark */
+    color: #f5f1ea;          /* --primary-color */
+    border: none;
+    padding: 12px 28px;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 50px;     /* Rounded pill shape */
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(112, 68, 43, 0.2);
+    transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.action-btn:hover {
+    background-color: #5a290f; /* Darker shade for hover */
+    transform: translateY(-3px);
+}
+    </style>
+</head>
+<body>
+    <audio id="fanfare-sound" src="u_ss015dykrt-brass-fanfare-with-timpani-and-winchimes-reverberated-146260.mp3"></audio>
+    <audio id="correct-sound" src="dragon-studio-correct-472358.mp3"></audio>
+<audio id="wrong-sound" src="freesound_community-wrong-47985.mp3"></audio>
+    <audio id="bg-music" loop>
+        <source src="bgm-cook-jazzy.mp3" type="audio/mpeg">
+    </audio>
+<div class="app-container">
+
+    <div id="ingredient-screen">
+        <header class="header">
+            <h1>Egg Drop Soup</h1>
+            <p>Pick the ingredients</p>
+            <p>Tap all correct ingredients for Egg Drop Soup</p>
+        </header>
+        <main class="ingredient-grid">
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/chicken stock.jpg" alt="Chicken Stock"><h3>Chicken Stock</h3><p>4 cups</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/butter.jpg" alt="Butter"><h3>Butter</h3><p>1 Butter</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/eggs.jpg" alt="Eggs"><h3>Eggs</h3><p>3 eggs</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/cornstarch.jpg" alt="Cornstarch"><h3>Cornstarch</h3><p>2 tbsp</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/water.png" alt="Water"><h3>Water</h3><p>1/4 cup</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/lettuce.jpg" alt="Lettuce"><h3>Lettuce</h3><p>1 Lettuce</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/salt.jpg" alt="Salt"><h3>Salt</h3><p>Pinch of salt</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/blackpepper.jpg" alt="Pepper"><h3>White/Black Pepper</h3><p>Pinch</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/springonion.webp" alt="Spring Onions"><h3>Spring Onions</h3><p>2 tbsp, chopped</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+            <div class="card"><div class="card-inner">
+                <div class="card-front"><img src="images(ham and cheeses)/Twice-graded-Cheese-Slices.jpg" alt="Cheese"><h3>Cheese</h3><p>5 Sliced of Cheese</p></div>
+                <div class="card-back"><div class="checkmark">&#x2705;</div>Correct!</div>
+            </div></div>
+
+
+        </main>
+        <footer class="footer">
+            <p>Correct picks: <span id="score">0</span>/7</p>
+            <button class="next-btn" id="continue-btn" disabled onclick="goToProcedures()">Continue to Procedures</button>
+        </footer>
+    </div>
+
+    <div id="procedure-screen">
+        <header class="header">
+            <h1>Egg Drop Soup</h1>
+            <p>Choose the Correct Procedures</p>
+        </header>
+        <div style="padding:10px;">
+            <div class="step-header">
+                <h2 id="step-label">Step 1 of 9</h2>
+                <p id="step-question"></p>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="choices-grid" id="choices-container"></div>
+        </div>
+    </div>
+
+    <div id="done-screen" style="display: none;">
+        <div class="trophy">&#x1F3C6;</div>
+        <h2>Well Done!</h2>
+        <p>You completed all the procedures for<br><strong>Egg Drop Soup!</strong></p>
+        
+        <!-- Navigation Options -->
+        <div class="nav-options">
+            <button onclick="location.reload()" class="action-btn">Start Over</button>
+            <button onclick="window.location.href='cookmate.html'" class="action-btn">Back to Main Page</button>
+        </div>
+    </div>
+<script>
+    const correctIngredients = ['Chicken Stock','Eggs','Cornstarch','Water','Salt','White/Black Pepper','Spring Onions'];
+    let correctCount = 0;
+
+    document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+        if (card.classList.contains('correct') || card.classList.contains('wrong')) return;
+        
+        const name = card.querySelector('h3').innerText.trim();
+        const isCorrect = correctIngredients.includes(name);
+        
+        // --- ADD THIS LINE HERE ---
+        checkAnswer(isCorrect);
+        // --------------------------
+
+        if (isCorrect) {
+            card.classList.add('correct');
+            correctCount++;
+            document.getElementById('score').textContent = correctCount;
+            if (correctCount === 7) document.getElementById('continue-btn').disabled = false;
+        } else {
+            card.classList.add('wrong');
+            setTimeout(() => card.classList.remove('wrong'), 1000);
+        }
+    });
+});
+
+    const steps = [
+        { question: "Step 1: How do you start the soup?", correct: "Pour 4 cups of chicken stock into a saucepan.", wrong: ["Pour 2 cups of water into a bowl.", "Pour the chicken stock into a glass.", "Place the stock in the refrigerator."] },
+        { question: "Step 2: How do you heat the stock?", correct: "Bring the stock to a gentle boil over medium heat.", wrong: ["Boil the stock over high heat.", "Cook the stock over low heat without boiling.", "Freeze the stock before cooking."] },
+        { question: "Step 3: How do you prepare the cornstarch mixture?", correct: "Dissolve 2 tablespoons cornstarch in ¼ cup water.", wrong: ["Mix 2 tablespoons cornstarch with 1 cup water.", "Add cornstarch directly to the soup.", "Mix 1 tablespoon cornstarch with ½ cup water."] },
+        { question: "Step 4: How do you add the cornstarch mixture?", correct: "Slowly add the cornstarch mixture while stirring continuously until slightly thickened.", wrong: ["Pour it quickly without stirring.", "Add it after serving.", "Add it after the eggs."] },
+        { question: "Step 5: How do you season the soup?", correct: "Pinch of salt and pepper.", wrong: ["1 teaspoon salt and 1 teaspoon pepper.", "½ teaspoon salt and ¼ teaspoon pepper.", "2 teaspoons salt and 1 teaspoon pepper."] },
+        { question: "Step 6: How do you prepare the eggs?", correct: "Beat 3 eggs in a bowl.", wrong: ["Fry the eggs first.", "Boil the eggs.", "Add whole eggs directly to the soup."] },
+        { question: "Step 7: How do you add the eggs to the soup?", correct: "Slowly pour the beaten eggs into the simmering soup while stirring gently in a circular motion to create thin egg ribbons.", wrong: ["Pour the eggs quickly without stirring.", "Add the eggs after serving.", "Mix the eggs with the spring onions first."] },
+        { question: "Step 8: How do you finish the soup?", correct: "Sprinkle 2 tablespoons chopped spring onions on top and serve hot.", wrong: ["Add more cornstarch and chill the soup.", "Remove the eggs and serve cold.", "Add sugar and refrigerate."] },
+        { question: "Step 9: How do you serve?", correct: "Serve hot.", wrong: ["Serve the soup cold.", "Serve the soup with ice.", "Freeze the soup before serving."] }
+    ];
+
+    let currentStep = 0;
+    let stepLocked = false;
+
+    function goToProcedures() {
+        document.getElementById('ingredient-screen').style.display = 'none';
+        document.getElementById('procedure-screen').style.display = 'block';
+        renderStep();
+    }
+
+    function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+    function renderStep() {
+        stepLocked = false;
+        const total = steps.length;
+        const { question, correct, wrong } = steps[currentStep];
+        document.getElementById('step-label').textContent = 'Step ' + (currentStep + 1) + ' of ' + total;
+        document.getElementById('step-question').textContent = question;
+        document.getElementById('progress-fill').style.width = ((currentStep / total) * 100) + '%';
+        const options = shuffle([correct, ...wrong]);
+        const container = document.getElementById('choices-container');
+        container.innerHTML = '';
+        options.forEach(text => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.textContent = text;
+            btn.addEventListener('click', () => handleChoice(btn, text === correct));
+            container.appendChild(btn);
+        });
+    }
+
+    function handleChoice(btn, isCorrect) {
+    if (stepLocked) return;
+
+    // Call the checkAnswer function to play the sound
+    checkAnswer(isCorrect);
+
+    if (isCorrect) {
+        stepLocked = true;
+        btn.classList.add('correct-choice');
+        setTimeout(() => {
+            currentStep++;
+            if (currentStep >= steps.length) showDone();
+            else renderStep();
+        }, 800);
+    } else {
+        btn.classList.add('wrong-choice');
+        setTimeout(() => btn.classList.remove('wrong-choice'), 1000);
+    }
+}
+
+function showDone() {
+    // 1. Hide the procedure screen
+    document.getElementById('procedure-screen').style.display = 'none';
+    
+    // 2. Show the done screen
+    document.getElementById('done-screen').style.display = 'block';
+
+    // 3. Stop the background music
+    const bgMusic = document.getElementById('bg-music');
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
+
+    // 4. Play the fanfare and stop it automatically when it ends
+    const fanfare = document.getElementById('fanfare-sound');
+    fanfare.play();
+
+    // This ensures it doesn't loop and stops exactly at its duration
+    fanfare.addEventListener('ended', () => {
+        console.log("Fanfare finished.");
+    });
+}
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const music = document.getElementById('bg-music');
+        
+        // Attempt to play the music
+        music.play().catch(error => {
+            console.log("Autoplay was prevented by the browser. Interaction required.");
+        });
+    });
+    function checkAnswer(isCorrect) {
+    if (isCorrect) {
+        // Play correct sound
+        document.getElementById('correct-sound').play();
+        // Your logic for marking it correct goes here
+    } else {
+        // Play wrong sound
+        document.getElementById('wrong-sound').play();
+        // Your logic for marking it wrong goes here
+    }
+}
+
+</script>
+</body>
+</html>

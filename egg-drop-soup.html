@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">   
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Egg Drop Soup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --primary-color: #f5f1ea;     
+    --secondary-color: #f8c889;   
+    --accent-dark: #70442b;       
+    --text-dark: #5a290f;        
+    --smoke-white: #f5f3f0;
+    --card-bg: #fffaf2;
+    --font-heading: 'Quicksand', sans-serif;
+    --font-body: 'Poppins', sans-serif;
+
+}
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        font-family: var(--font-body);
+        background-color: var(--secondary-color);
+        color: var(--accent-dark);
+        overflow-x: hidden;
+    }
+
+    img {
+        max-width: 100%;
+        display: block;
+    }
+
+    h1, h2, h3 {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        color: var(--accent-dark);
+    }
+
+    nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        background: var(--text-dark);
+        padding: 14px 0;
+        z-index: 1000;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 4px 25px rgba(74, 53, 50, 0.06);
+    }
+
+    .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .nav-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .brand-name {
+        color: var(--smoke-white);
+        font-weight: 700;
+        font-size: clamp(1.2rem, 4vw, 1.6rem);
+        letter-spacing: 0.5px;
+    }
+
+    section {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 110px 16px 60px;
+        background-size: cover;
+        background-position: center;
+        background-attachment: scroll;
+        position: relative;
+    }
+
+    #section1, #section2, #section3, #section4 {
+        background-image: linear-gradient(rgba(74, 53, 50, 0.5), rgba(107, 76, 71, 0.6)), url("123.jpg");
+    }
+
+    section .overlay {
+        background: rgba(255, 255, 255, 0.96);
+        padding: clamp(28px, 6vw, 60px) clamp(20px, 5vw, 40px);
+        width: 100%;
+        max-width: 1100px;
+        border-radius: 24px;
+        box-shadow: 0 15px 35px rgba(107, 76, 71, 0.05);
+        color: var(--accent-dark);
+    }
+
+    section h1 {
+        font-size: clamp(1.8rem, 6vw, 3rem);
+        line-height: 1.2;
+        margin-bottom: 24px;
+        text-shadow: 0 4px 15px rgba(74, 53, 50, 0.2);
+    }
+
+    section h2 {
+        font-size: clamp(1.4rem, 4vw, 1.8rem);
+        margin-bottom: 18px;
+    }
+
+    /* Ingredients list */
+    .ingredient-list {
+        list-style: none;
+        max-width: 480px;
+        margin: 0 auto;
+        text-align: left;
+    }
+
+    .ingredient-list li {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 18px;
+        margin-bottom: 10px;
+        background: var(--card-bg);
+        border-radius: 12px;
+        border: 1px solid rgba(112, 68, 43, 0.15);
+        font-size: clamp(0.95rem, 2.2vw, 1.05rem);
+    }
+
+    .ingredient-list li span.amount {
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    /* Procedure steps */
+    .step-list {
+        list-style: none;
+        max-width: 650px;
+        margin: 0 auto;
+        text-align: left;
+        counter-reset: step-counter;
+    }
+
+    .step-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px 0;
+        border-bottom: 1px solid rgba(112, 68, 43, 0.15);
+        font-size: clamp(0.95rem, 2.2vw, 1.05rem);
+        line-height: 1.6;
+    }
+
+    .step-list li:last-child {
+        border-bottom: none;
+    }
+
+    .step-list li::before {
+        counter-increment: step-counter;
+        content: counter(step-counter);
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--accent-dark);
+        color: var(--smoke-white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-family: var(--font-heading);
+    }
+
+    /* Video section */
+    .video-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        aspect-ratio: 16 / 9;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(112, 68, 43, 0.25);
+        background: #000;
+    }
+
+    .video-wrapper iframe,
+    .video-wrapper video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border: none;
+        display: block;
+    }
+
+    /* Quiz link */
+    .quiz-link {
+        display: inline-block;
+        margin-top: 25px;
+        padding: 14px 36px;
+        background: var(--accent-dark);
+        color: var(--smoke-white);
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: clamp(1rem, 2.5vw, 1.2rem);
+        text-decoration: none;
+        border-radius: 50px;
+        box-shadow: 0 8px 20px rgba(59, 36, 24, 0.25);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .quiz-link:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 26px rgba(59, 36, 24, 0.35);
+    }
+
+    footer {
+        text-align: center;
+        padding: 30px 16px;
+        background: var(--text-dark);
+        color: var(--smoke-white);
+        font-size: 0.9rem;
+        letter-spacing: 0.6px;
+    }
+
+    @media (max-width: 768px) {
+        section {
+            padding: 100px 14px 50px;
+        }
+        section .overlay {
+            border-radius: 20px;
+            padding: 28px 18px;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .brand-name {
+            font-size: 1.1rem;
+        }
+        .quiz-link {
+            padding: 12px 28px;
+        }
+    }
+</style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-container">
+            <div class="nav-left">
+                <span class="brand-name">QR Cook Mate</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Section 1: Ingredients -->
+    <section id="section1">
+        <div class="overlay">
+            <h1>Egg Drop Soup</h1>
+            <h2>Ingredients</h2>
+            <ul class="ingredient-list">
+                <li><span>Chicken stock</span><span class="amount">4 cups</span></li>
+                <li><span>Eggs</span><span class="amount">3 pcs</span></li>
+                <li><span>Cornstarch</span><span class="amount">2 tbsp</span></li>
+                <li><span>Water</span><span class="amount">1/4 cup</span></li>
+                <li><span>Salt</span><span class="amount">Pinch</span></li>
+                <li><span>White or black pepper</span><span class="amount">Pinch</span></li>
+                <li><span>Spring onions</span><span class="amount">2 tbsp</span></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Section 2: Procedure -->
+    <section id="section2">
+        <div class="overlay">
+            <h2>Procedure</h2>
+            <ol class="step-list">
+                <li>Pour 4 cups of chicken stock into a saucepan.</li>
+                <li>Bring the stock to a gentle boil over medium heat.</li>
+                <li>In a small bowl, dissolve 2 tablespoons cornstarch in 1/4 cup water.</li>
+                <li>Slowly add the cornstarch mixture to the stock while stirring continuously until slightly thickened.</li>
+                <li>Beat 2 eggs in a bowl.</li>
+                <li>Slowly pour the beaten eggs into the simmering soup while stirring gently in a circular motion to create thin egg ribbons.</li>
+                <li>Season with a pinch of salt and a pinch of pepper.</li>
+                <li>Sprinkle 2 tablespoons chopped spring onions on top.</li>
+                <li>Serve hot.</li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- Section 3: Video -->
+    <section id="section3">
+        <div class="overlay">
+            <h2>Watch How It's Made</h2>
+            <div class="video-wrapper">
+                <video controls preload="metadata">
+                    <source src="video_2026-06-29_09-25-04.mp4" type="video/mp4">
+                    Your browser does not support this video format.
+                </video>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Quiz -->
+    <section id="section4">
+        <div class="overlay">
+            <h2>Test What You've Learned</h2>
+            <a href="Quiz.html" class="quiz-link">Take the Quiz</a>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 QR Cook Mate. All Rights Reserved.</p>
+    </footer>
+
+</body>
+</html>
